@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CAN I RUN IT?</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23000'/%3E%3Crect x='20' y='22' width='24' height='20' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#000;--fg:#fff;--mut:#9a9a9a;--line:#2a2a2a;--card:#0d0d0d;--ok:#3dff8b;--mid:#ffd23d;--bad:#ff4d4d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:ui-monospace,"Courier New",monospace;line-height:1.5}
+.wrap{max-width:860px;margin:0 auto;padding:24px 16px 64px}
+header{display:flex;align-items:center;gap:16px;margin-bottom:28px}
+h1{font-size:clamp(1.6rem,5vw,2.4rem);margin:0;letter-spacing:2px}
+.sub{color:var(--mut);margin:0;font-size:.9rem}
+.tabs{display:flex;gap:8px;margin-bottom:16px}
+.tab{flex:1;padding:12px;background:var(--card);color:var(--fg);border:1px solid var(--line);cursor:pointer;font:inherit}
+.tab.on{background:var(--fg);color:var(--bg);font-weight:700}
+.card{background:var(--card);border:1px solid var(--line);padding:18px;margin-bottom:18px}
+label{display:block;font-size:.8rem;color:var(--mut);margin:10px 0 4px}
+input,select{width:100%;padding:10px;background:#000;color:var(--fg);border:1px solid var(--line);font:inherit}
+input:focus,select:focus{outline:2px solid var(--fg)}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+@media(max-width:560px){.grid{grid-template-columns:1fr}}
+button.go{margin-top:16px;width:100%;padding:14px;background:var(--fg);color:var(--bg);border:0;font:inherit;font-weight:700;cursor:pointer;letter-spacing:1px}
+button.go:disabled{opacity:.5;cursor:wait}
+h2{font-size:1.05rem;margin:0 0 10px;letter-spacing:1px}
+.row{display:flex;gap:8px}.row input{flex:1}.row button{width:auto;margin:0;padding:0 18px}
+.game{border-top:1px solid var(--line);padding:12px 0}
+.game b{font-size:1rem}
+.tag{display:inline-block;padding:1px 8px;font-size:.75rem;margin-left:8px;border:1px solid}
+.t-ok{color:var(--ok)}.t-mid{color:var(--mid)}.t-bad{color:var(--bad)}
+.meta{color:var(--mut);font-size:.85rem}
+ul{padding-left:18px;margin:6px 0}
+.err{color:var(--bad)}
+.disc{color:var(--mut);font-size:.75rem;margin-top:24px}
+.bot{animation:b 1.6s infinite steps(2)}@keyframes b{50%{transform:translateY(-1px)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<svg width="72" height="72" viewBox="0 0 72 72" aria-label="logo" style="flex:none;border:1px solid #333">
+<rect width="72" height="72" fill="#000"/>
+<g fill="#fff" id="g"></g>
+<g class="bot">
+<rect x="22" y="22" width="28" height="24" fill="#000" stroke="#fff" stroke-width="2"/>
+<rect x="34" y="14" width="4" height="8" fill="#fff"/><rect x="32" y="11" width="8" height="4" fill="#fff"/>
+<rect x="27" y="29" width="6" height="6" fill="#fff"/><rect x="40" y="31" width="4" height="4" fill="#fff"/>
+<rect x="28" y="40" width="16" height="2" fill="#fff"/>
+<text x="52" y="22" fill="#fff" font-size="12" font-family="monospace" font-weight="700">?</text>
+</g>
+</svg>
+<div><h1>CAN I RUN IT?</h1><p class="sub">Descubra quais jogos rodam na sua máquina. Sem promessa de FPS exato.</p></div>
+</header>
+
+<div class="tabs" id="tabs">
+<button class="tab on" data-t="pc">PC</button>
+<button class="tab" data-t="notebook">NOTEBOOK</button>
+<button class="tab" data-t="celular">CELULAR</button>
+</div>
+
+<div class="card">
+<div id="fields"></div>
+<button class="go" id="go">VER O QUE RODA</button>
+</div>
+
+<div class="card">
+<h2>NÃO ACHOU SEU JOGO?</h2>
+<div class="row"><input id="game" placeholder="Ex: GTA V, Cyberpunk 2077, Genshin Impact"><button class="go" id="gbtn">CHECAR</button></div>
+<div id="gout"></div>
+</div>
+
+<div id="out"></div>
+<p class="disc">Estimativas feitas por IA com base em requisitos e benchmarks públicos. O desempenho real varia com drivers, temperatura, versão do jogo e outros fatores.</p>
+</div>
+
+<script>
+// grade de quadradinhos da logo
+(function(){let s='';for(let y=0;y<8;y++)for(let x=0;x<8;x++){if((x*7+y*13)%5!==0)s+=`<rect x="${4+x*8}" y="${4+y*8}" width="7" height="7" opacity="${.25+((x+y)%3)*.2}"/>`}document.getElementById('g').innerHTML=s})();
+
+const F={
+pc:[['cpu','Processador (CPU)','Ex: Ryzen 5 5600'],['gpu','Placa de vídeo (GPU)','Ex: RTX 3060 12GB'],['ram','Memória RAM','Ex: 16GB DDR4'],['disco','Armazenamento','Ex: SSD NVMe 512GB'],['tela','Monitor (opcional)','Ex: 1080p 144Hz']],
+notebook:[['modelo','Modelo (opcional)','Ex: Acer Nitro 5'],['cpu','Processador (CPU)','Ex: i5-11400H'],['gpu','Placa de vídeo (GPU)','Ex: GTX 1650 / Intel UHD'],['ram','Memória RAM','Ex: 8GB'],['disco','Armazenamento','Ex: SSD 256GB']],
+celular:[['modelo','Modelo do celular','Ex: Galaxy A54'],['chip','Processador/Chipset','Ex: Exynos 1380'],['ram','Memória RAM','Ex: 8GB'],['sistema','Sistema','Ex: Android 14 / iOS 17']]
+};
+let tipo='pc';
+function render(){document.getElementById('fields').innerHTML='<div class="grid">'+F[tipo].map(([k,l,p])=>`<div><label>${l}</label><input data-k="${k}" placeholder="${p}"></div>`).join('')+'</div>'}
+render();
+document.getElementById('tabs').onclick=e=>{const t=e.target.dataset.t;if(!t)return;tipo=t;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));render()};
+function specs(){const o={};document.querySelectorAll('#fields input').forEach(i=>{if(i.value.trim())o[i.dataset.k]=i.value.trim()});return o}
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cls=v=>{v=(v||'').toLowerCase();return v.includes('não')||v.includes('nao')?'t-bad':(v.includes('trav')||v.includes('limite')||v.includes('baixo'))?'t-mid':'t-ok'};
+async function call(body){
+const r=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+const d=await r.json();if(!r.ok)throw new Error(d.error||'Erro no servidor');return d}
+
+document.getElementById('go').onclick=async()=>{
+const s=specs();const out=document.getElementById('out'),b=document.getElementById('go');
+if(Object.keys(s).length<2){out.innerHTML='<div class="card err">Preencha pelo menos 2 campos.</div>';return}
+b.disabled=true;b.textContent='O ROBÔ ESTÁ PESQUISANDO...';out.innerHTML='';
+try{const d=await call({mode:'list',tipo,specs:s});
+out.innerHTML=`<div class="card"><h2>RESUMO</h2><p>${esc(d.resumo)}</p>
+<h2>POSSÍVEIS GARGALOS</h2><ul>${(d.gargalos||[]).map(g=>`<li>${esc(g)}</li>`).join('')}</ul></div>
+<div class="card"><h2>JOGOS QUE RODAM (${(d.jogos||[]).length})</h2>${(d.jogos||[]).map(j=>`<div class="game"><b>${esc(j.nome)}</b><span class="tag ${cls(j.veredito)}">${esc(j.veredito)}</span>
+<div class="meta">FPS provável: ${esc(j.fps)} · Resolução: ${esc(j.resolucao)} · Configurações: ${esc(j.config)}</div>${j.obs?`<div class="meta">${esc(j.obs)}</div>`:''}</div>`).join('')}</div>`
+}catch(e){out.innerHTML=`<div class="card err">${esc(e.message)}</div>`}
+b.disabled=false;b.textContent='VER O QUE RODA'};
+
+document.getElementById('gbtn').onclick=async()=>{
+const s=specs(),g=document.getElementById('game').value.trim(),o=document.getElementById('gout'),b=document.getElementById('gbtn');
+if(!g)return;if(Object.keys(s).length<2){o.innerHTML='<p class="err">Preencha as specs lá em cima primeiro.</p>';return}
+b.disabled=true;o.innerHTML='<p class="meta">Pesquisando...</p>';
+try{const d=await call({mode:'game',tipo,specs:s,jogo:g});
+o.innerHTML=`<div class="game"><b>${esc(d.nome||g)}</b><span class="tag ${cls(d.veredito)}">${esc(d.veredito)}</span>
+<div class="meta">FPS provável: ${esc(d.fps)} · Resolução: ${esc(d.resolucao)} · Configurações: ${esc(d.config)}</div>
+<p>${esc(d.explicacao)}</p><ul>${(d.gargalos||[]).map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`
+}catch(e){o.innerHTML=`<p class="err">${esc(e.message)}</p>`}
+b.disabled=false};
+</script>
+</body>
+</html>
